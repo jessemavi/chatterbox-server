@@ -21,8 +21,8 @@ var defaultCorsHeaders = {
 };
 
 var _ = require('../node_modules/underscore/underscore.js');
-var messages = [];
-// var messages = [{createdAt: "2016-10-03T23:22:38.747Z", objectId: "qpcIw5cVHH", roomname: "lobby", text: "asdfasdf", updatedAt: "2016-10-03T23:22:38.747Z", username: 'whatever'}];
+// var messages = [];
+var messages = [{createdAt: "2016-10-03T23:22:38.747Z", objectId: "qpcIw5cVHH", roomname: "lobby", text: "asdfasdf", updatedAt: "2016-10-03T23:22:38.747Z", username: 'whatever'}];
 
 
 var requestHandler = function(request, response) {
@@ -46,6 +46,17 @@ var requestHandler = function(request, response) {
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
 
 
+  var idGenerator = function() {
+    var id = '';
+
+    for (var i = 0; i < 10; i++) {
+      var randomNum = Math.random() * 75 + 48;
+      id += String.fromCharCode(randomNum);
+    }
+
+    return id;
+  };
+
   if (request.method === 'OPTIONS') {
 
     response.writeHead(200, headers);
@@ -66,18 +77,21 @@ var requestHandler = function(request, response) {
 
     if (request.url === '/classes/messages') {
 
+
+
       var body = [];
 
       request.on('data', function(chunk) {
 
         body.push(chunk);
       
-      });
-
-      request.on('end', function() {
+      }).on('end', function() {
       
         body = Buffer.concat(body).toString();
-        messages.push(JSON.parse(body));
+        // messages.push(JSON.parse(body));
+        var newMessage = JSON.parse(body);
+        newMessage.objectId = idGenerator();
+        messages.push(newMessage);
       });
 
       response.writeHead(201, headers);
