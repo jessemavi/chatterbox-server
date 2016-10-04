@@ -16,8 +16,6 @@ var defaultCorsHeaders = {
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'access-control-allow-headers': 'X-Requested-With, X-HTTP-Method-Override, content-type, accept',
   'access-control-max-age': 10 // Seconds.
-  // 'Access-Control-Allow-Credentials': false
-  // 'Access-Control-Allow-Headers': 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept'
 };
 
 var _ = require('../node_modules/underscore/underscore.js');
@@ -57,6 +55,23 @@ var requestHandler = function(request, response) {
     return id;
   };
 
+  var etagGenerator = function() {
+    var etag;
+    
+    if (request.method === 'POST') {
+      etag = 'p' + messages[0].objectId[0];
+    } else if (request.method === 'GET') {
+      etag = 'g';
+
+      messages.forEach(function(message) {
+        etag += message.objectId[0];
+      });
+      
+    }
+
+    return etag;
+  };
+
   if (request.method === 'OPTIONS') {
 
     response.writeHead(200, headers);
@@ -65,19 +80,19 @@ var requestHandler = function(request, response) {
   } else if (request.method === 'GET') {
 
     if (request.url === '/classes/messages') {
-      response.writeHead(200, headers);
+      
+      headers['etag'] = etagGenerator();
+      response.writeHead((messages.length ? 200 : 204), headers);
       response.end(JSON.stringify({results: messages}));    
+        
     } else {
       response.writeHead(404, headers);
       response.end();
-      
     }
 
   } else if (request.method === 'POST') {
 
     if (request.url === '/classes/messages') {
-
-
 
       var body = [];
 
@@ -89,7 +104,9 @@ var requestHandler = function(request, response) {
 
         var newMessage = JSON.parse(body.toString());
         newMessage.objectId = idGenerator();
-        messages.push(newMessage);
+        messages.unshift(newMessage);
+        headers['etag'] = etagGenerator();
+
       });
 
       response.writeHead(201, headers);

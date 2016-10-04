@@ -2,6 +2,24 @@ var request = require('request');
 var expect = require('chai').expect;
 
 describe('server', function() {
+
+  it('should respond to GET requests for /classes/messages that have no messages with a 204 status code', function(done) {
+    request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
+      expect(response.statusCode).to.equal(204);
+      var testRequest = {method: 'POST',
+        uri: 'http://127.0.0.1:3000/classes/messages',
+        json: {
+          username: 'test',
+          message: 'Just to add content to the server'}
+      };
+
+      request(testRequest, function(error, response, body) {
+      });  
+      done();
+    });
+  });  
+
+
   it('should respond to GET requests for /classes/messages with a 200 status code', function(done) {
     request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
       expect(response.statusCode).to.equal(200);
@@ -46,7 +64,7 @@ describe('server', function() {
       done();
     });
   });
-
+  
   it('should respond with messages that were previously posted', function(done) {
     var requestParams = {method: 'POST',
       uri: 'http://127.0.0.1:3000/classes/messages',
@@ -71,6 +89,65 @@ describe('server', function() {
       expect(response.statusCode).to.equal(404);
       done();
     });
+  });
+
+  it('should respond with mutiple messages that were previously posted', function(done) {
+    var requestParams1 = {method: 'POST',
+      uri: 'http://127.0.0.1:3000/classes/messages',
+      json: {
+        username: 'Jono',
+        message: 'Do my bidding!'}
+    };
+
+    var requestParams2 = {method: 'POST',
+      uri: 'http://127.0.0.1:3000/classes/messages',
+      json: {
+        username: 'Steve',
+        message: 'Just do something!'}
+    };
+
+    request(requestParams1, function(error, response, body) {
+      // Now if we request the log, that message we posted should be there:
+      request(requestParams2, function(error, response, body) {
+        request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
+          var messages = JSON.parse(body).results;
+          expect(messages.length).to.equal(5);
+          expect(messages[0].username).to.equal('Steve');
+          expect(messages[1].username).to.equal('Jono');
+          expect(messages[0].message).to.equal('Just do something!');
+          expect(messages[1].message).to.equal('Do my bidding!');
+          done();
+        });
+        
+      });
+    }); 
+  });
+
+  it('should respond with different headers for different requests', function(done) {
+    var requestParams = {method: 'POST',
+      uri: 'http://127.0.0.1:3000/classes/messages',
+      json: {
+        username: 'Jono',
+        message: 'Do my bidding!'}
+    };
+
+    var postRequestHeader;
+    var getRequestHeader;
+
+    request(requestParams, function(error, response, body) {
+      postRequestHeader = JSON.stringify(response.headers);
+      console.log('post', response.headers.etag);
+
+      request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
+        console.log('get', response.headers.etag);
+        getRequestHeader = JSON.stringify(response.headers);
+        expect(postRequestHeader).to.not.equal(getRequestHeader);
+        done();
+        
+      });
+    });
+
+
   });
 
 
