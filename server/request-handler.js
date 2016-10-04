@@ -18,7 +18,10 @@ var defaultCorsHeaders = {
   'access-control-max-age': 10 // Seconds.
 };
 
+var fs = require('fs');
+
 var _ = require('../node_modules/underscore/underscore.js');
+var $ = require('../node_modules/jquery/dist/jquery.js');
 var messages = [];
 // var messages = [{createdAt: "2016-10-03T23:22:38.747Z", objectId: "qpcIw5cVHH", roomname: "lobby", text: "asdfasdf", updatedAt: "2016-10-03T23:22:38.747Z", username: 'whatever'}];
 
@@ -38,6 +41,21 @@ var requestHandler = function(request, response) {
   // Adding more logging to your server can be an easy way to get passive
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
+
+  // fs.readFile('./client/index.html', function (error, data) {
+  //   if (error) {
+  //     response.writeHead(500);
+  //   } else {
+  //     console.log(data);
+  //     response.writeHead(200, {'Content-Type': 'text/html'});
+  //     response.end(data.toString());  
+  //   }
+  // });
+
+  
+
+//******************************************************************************************************************************************************
+
   var statusCode = 200;
   var headers = defaultCorsHeaders;
   headers['Content-Type'] = 'text/plain';
@@ -118,6 +136,8 @@ var requestHandler = function(request, response) {
 
   }
 
+
+//******************************************************************************************************************************************************
   // The outgoing status.
 
   // See the note below about CORS headers.
