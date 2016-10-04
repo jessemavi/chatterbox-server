@@ -1,5 +1,4 @@
 var express = require('express');
-var bodyParser = require('body-parser');
 
 var app = express();
 
@@ -15,6 +14,8 @@ var idGenerator = function() {
 
   return id;
 };
+
+app.use(express.static('client'));
 
 app.use('/classes/messages', function(req, res, next) {
   res.setHeader('access-control-allow-origin', '*');
