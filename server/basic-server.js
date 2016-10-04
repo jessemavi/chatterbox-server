@@ -1,6 +1,6 @@
 /* Import node's http module: */
 var http = require('http');
-var dispatcher = require('httpdispatcher');
+// var dispatcher = require('httpdispatcher');
 
 var handleRequest = require('./request-handler');
 

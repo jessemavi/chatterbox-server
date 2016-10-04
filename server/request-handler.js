@@ -21,8 +21,8 @@ var defaultCorsHeaders = {
 };
 
 var _ = require('../node_modules/underscore/underscore.js');
-// var messages = [];
-var messages = [{createdAt: "2016-10-03T23:22:38.747Z", objectId: "qpcIw5cVHH", roomname: "lobby", text: "asdfasdf", updatedAt: "2016-10-03T23:22:38.747Z", username: 'whatever'}];
+var messages = [];
+// var messages = [{createdAt: "2016-10-03T23:22:38.747Z", objectId: "qpcIw5cVHH", roomname: "lobby", text: "asdfasdf", updatedAt: "2016-10-03T23:22:38.747Z", username: 'whatever'}];
 
 
 var requestHandler = function(request, response) {
@@ -86,10 +86,8 @@ var requestHandler = function(request, response) {
         body.push(chunk);
       
       }).on('end', function() {
-      
-        body = Buffer.concat(body).toString();
-        // messages.push(JSON.parse(body));
-        var newMessage = JSON.parse(body);
+
+        var newMessage = JSON.parse(body.toString());
         newMessage.objectId = idGenerator();
         messages.push(newMessage);
       });
