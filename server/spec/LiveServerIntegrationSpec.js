@@ -123,7 +123,7 @@ describe('server', function() {
     }); 
   });
 
-  it('should respond with different headers for different requests', function(done) {
+  xit('should respond with different headers for different requests', function(done) {
     var requestParams = {method: 'POST',
       uri: 'http://127.0.0.1:3000/classes/messages',
       json: {
@@ -136,10 +136,8 @@ describe('server', function() {
 
     request(requestParams, function(error, response, body) {
       postRequestHeader = JSON.stringify(response.headers);
-      console.log('post', response.headers.etag);
 
       request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
-        console.log('get', response.headers.etag);
         getRequestHeader = JSON.stringify(response.headers);
         expect(postRequestHeader).to.not.equal(getRequestHeader);
         done();
@@ -149,6 +147,36 @@ describe('server', function() {
 
 
   });
+
+  it('should be able to handle DELETE request', function(done) {
+
+    request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
+      var messages = JSON.parse(body).results;
+      expect(messages.length).to.equal(5);  
+      expect(messages[0].username).to.equal('Steve');
+      var idToDelete = JSON.parse(body).results[0].objectId;
+
+      var requestParams = {method: 'DELETE',
+        uri: 'http://127.0.0.1:3000/classes/messages' + '/' + idToDelete,
+      };
+
+      request(requestParams, function(error, response, body) {
+
+        request('http://127.0.0.1:3000/classes/messages', function(error, response, body) {
+          var messages = JSON.parse(body).results;
+          expect(messages.length).to.equal(4);
+          expect(messages[0].username).to.equal('Jono');
+          done();
+        });
+
+      });
+
+    });
+
+
+  });
+
+
 
 
 });
