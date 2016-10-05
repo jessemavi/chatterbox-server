@@ -19,12 +19,9 @@ var defaultCorsHeaders = {
 };
 
 var fs = require('fs');
+var path = require('path');
 
-var _ = require('../node_modules/underscore/underscore.js');
-var $ = require('../node_modules/jquery/dist/jquery.js');
-var messages = [];
-// var messages = [{createdAt: "2016-10-03T23:22:38.747Z", objectId: "qpcIw5cVHH", roomname: "lobby", text: "asdfasdf", updatedAt: "2016-10-03T23:22:38.747Z", username: 'whatever'}];
-
+var messages = [{objectId: 'qpcIw5cVHH', roomname: 'lobby', text: 'this is the basic-server...', updatedAt: '2016-10-03T23:22:38.747Z', username: 'basic-server'}];
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -42,99 +39,204 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
 
-  // fs.readFile('./client/index.html', function (error, data) {
-  //   if (error) {
-  //     response.writeHead(500);
-  //   } else {
-  //     console.log(data);
-  //     response.writeHead(200, {'Content-Type': 'text/html'});
-  //     response.end(data.toString());  
-  //   }
-  // });
+  console.log('Serving request type ' + request.method + ' for url ' + request.url);
+
+  var filePath = request.url;
+  if (filePath === '/' || filePath.slice(0, 11) === '/?username=') {
+    filePath = '/index.html';
+  }
+
+  filePath = './client' + filePath;
+  var extname = path.extname(filePath);
+  var contentType = 'text/html';
+
+  switch (extname) {
+  case '.js':
+    contentType = 'text/javascript';
+    break;
+  case '.css':
+    contentType = 'text/css';
+    break;
+  }
+
+
+  fs.exists(filePath, function(exists) {
+
+    if (exists) {
+      fs.readFile(filePath, function(error, content) {
+        if (error) {
+          response.writeHead(500);
+          response.end(JSON.stringify({result: messages}));
+        } else {                   
+          response.writeHead(200, { 'Content-Type': contentType });
+          response.end(content, 'utf-8');                  
+        }             
+      });
+    } else {
+      var headers = defaultCorsHeaders;
+      headers['Content-Type'] = 'text/plain';
+
+
+      var idGenerator = function() {
+        var id = '';
+
+        for (var i = 0; i < 10; i++) {
+          var randomNum = Math.random() * 75 + 48;
+          id += String.fromCharCode(randomNum);
+        }
+
+        return id;
+      };
+
+      var etagGenerator = function() {
+        var etag;
+        
+        if (request.method === 'POST') {
+          etag = 'p' + messages[0].objectId[0];
+        } else if (request.method === 'GET') {
+          etag = 'g';
+
+          messages.forEach(function(message) {
+            etag += message.objectId[0];
+          });
+          
+        }
+
+        return etag;
+      };
+
+      if (request.method === 'OPTIONS') {
+
+        response.writeHead(200, headers);
+        response.end(JSON.stringify({results: messages}));    
+
+      } else if (request.method === 'GET') {
+
+        if (request.url === '/classes/messages') {
+          
+          headers['etag'] = etagGenerator();
+          response.writeHead((messages.length ? 200 : 204), headers);
+          response.end(JSON.stringify({results: messages}));    
+            
+        } else {
+          response.writeHead(404, headers);
+          response.end();
+        }
+
+      } else if (request.method === 'POST') {
+
+        if (request.url === '/classes/messages') {
+
+          var body = [];
+
+          request.on('data', function(chunk) {
+
+            body.push(chunk);
+          
+          }).on('end', function() {
+
+            var newMessage = JSON.parse(body.toString());
+            newMessage.objectId = idGenerator();
+            messages.push(newMessage);
+            headers['etag'] = etagGenerator();
+
+          });
+
+          response.writeHead(201, headers);
+          response.end();
+        }
+
+      } else {
+
+
+      }     
+    }
+
+  });
+
 
   
 
 //******************************************************************************************************************************************************
 
-  var statusCode = 200;
-  var headers = defaultCorsHeaders;
-  headers['Content-Type'] = 'text/plain';
-  console.log('Serving request type ' + request.method + ' for url ' + request.url);
+  // var statusCode = 200;
+  // var headers = defaultCorsHeaders;
+  // headers['Content-Type'] = 'text/plain';
 
 
-  var idGenerator = function() {
-    var id = '';
+  // var idGenerator = function() {
+  //   var id = '';
 
-    for (var i = 0; i < 10; i++) {
-      var randomNum = Math.random() * 75 + 48;
-      id += String.fromCharCode(randomNum);
-    }
+  //   for (var i = 0; i < 10; i++) {
+  //     var randomNum = Math.random() * 75 + 48;
+  //     id += String.fromCharCode(randomNum);
+  //   }
 
-    return id;
-  };
+  //   return id;
+  // };
 
-  var etagGenerator = function() {
-    var etag;
+  // var etagGenerator = function() {
+  //   var etag;
     
-    if (request.method === 'POST') {
-      etag = 'p' + messages[0].objectId[0];
-    } else if (request.method === 'GET') {
-      etag = 'g';
+  //   if (request.method === 'POST') {
+  //     etag = 'p' + messages[0].objectId[0];
+  //   } else if (request.method === 'GET') {
+  //     etag = 'g';
 
-      messages.forEach(function(message) {
-        etag += message.objectId[0];
-      });
+  //     messages.forEach(function(message) {
+  //       etag += message.objectId[0];
+  //     });
       
-    }
+  //   }
 
-    return etag;
-  };
+  //   return etag;
+  // };
 
-  if (request.method === 'OPTIONS') {
+  // if (request.method === 'OPTIONS') {
 
-    response.writeHead(200, headers);
-    response.end(JSON.stringify({results: messages}));    
+  //   response.writeHead(200, headers);
+  //   response.end(JSON.stringify({results: messages}));    
 
-  } else if (request.method === 'GET') {
+  // } else if (request.method === 'GET') {
 
-    if (request.url === '/classes/messages') {
+  //   if (request.url === '/classes/messages') {
       
-      headers['etag'] = etagGenerator();
-      response.writeHead((messages.length ? 200 : 204), headers);
-      response.end(JSON.stringify({results: messages}));    
+  //     headers['etag'] = etagGenerator();
+  //     response.writeHead((messages.length ? 200 : 204), headers);
+  //     response.end(JSON.stringify({results: messages}));    
         
-    } else {
-      response.writeHead(404, headers);
-      response.end();
-    }
+  //   } else {
+  //     response.writeHead(404, headers);
+  //     response.end();
+  //   }
 
-  } else if (request.method === 'POST') {
+  // } else if (request.method === 'POST') {
 
-    if (request.url === '/classes/messages') {
+  //   if (request.url === '/classes/messages') {
 
-      var body = [];
+  //     var body = [];
 
-      request.on('data', function(chunk) {
+  //     request.on('data', function(chunk) {
 
-        body.push(chunk);
+  //       body.push(chunk);
       
-      }).on('end', function() {
+  //     }).on('end', function() {
 
-        var newMessage = JSON.parse(body.toString());
-        newMessage.objectId = idGenerator();
-        messages.unshift(newMessage);
-        headers['etag'] = etagGenerator();
+  //       var newMessage = JSON.parse(body.toString());
+  //       newMessage.objectId = idGenerator();
+  //       messages.unshift(newMessage);
+  //       headers['etag'] = etagGenerator();
 
-      });
+  //     });
 
-      response.writeHead(201, headers);
-      response.end();
-    }
+  //     response.writeHead(201, headers);
+  //     response.end();
+  //   }
 
-  } else {
+  // } else {
 
 
-  }
+  // }
 
 
 //******************************************************************************************************************************************************

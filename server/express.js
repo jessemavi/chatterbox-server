@@ -2,7 +2,9 @@ var express = require('express');
 
 var app = express();
 
-var messages = [];
+// var messages = [];
+var messages = [{objectId: 'qpcIw5cVHH', roomname: 'lobby', text: 'this is the express server...', username: 'express'}];
+
 
 var idGenerator = function() {
   var id = '';
